@@ -1,0 +1,10 @@
+PREFIX osmkey: <https://www.openstreetmap.org/wiki/Key:>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+SELECT ?osm ?c ?name ?nametr ?nameen WHERE {
+  ?osm osmkey:amenity "place_of_worship" ; osmkey:religion "muslim" .
+  ?osm geo:hasGeometry/geo:asWKT ?g . BIND(geof:centroid(?g) AS ?c)
+  OPTIONAL { ?osm <https://www.openstreetmap.org/wiki/Key:name> ?name }
+  OPTIONAL { ?osm <https://www.openstreetmap.org/wiki/Key:name:tr> ?nametr }
+  OPTIONAL { ?osm <https://www.openstreetmap.org/wiki/Key:name:en> ?nameen }
+}
