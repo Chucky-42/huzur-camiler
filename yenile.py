@@ -29,12 +29,23 @@ def main():
         out = run(sys.executable, 'build.py')
         log('build ' + out.strip().splitlines()[-1])
         run('git', 'add', '-A', 'docs')
-        if not run('git', 'status', '--porcelain', 'docs').strip():
-            log('no change')
-            return
-        run('git', 'commit', '-qm', 'Weekly rebuild %s' % datetime.date.today().isoformat())
-        run('git', 'push', '-q')
-        log('pushed')
+        changed = bool(run('git', 'status', '--porcelain', 'docs').strip())
+        if changed:
+            run('git', 'commit', '-qm', 'Weekly rebuild %s' % datetime.date.today().isoformat())
+        # The same tiles live in two repos: app versions after 30 Oct 2026 read
+        # huzurvakti/camiler (huzurvakti.github.io/camiler), older ones
+        # Chucky-42/huzur-camiler. Both are pushed every week, even without a new
+        # commit, so a push that failed last week catches up (an up-to-date
+        # push is a no-op).
+        failed = []
+        for remote in ('org', 'origin'):
+            try:
+                run('git', 'push', '-q', remote, 'main')
+            except RuntimeError as e:
+                failed.append('%s: %s' % (remote, e))
+        if failed:
+            raise RuntimeError(' || '.join(failed))
+        log('pushed' if changed else 'no change')
     except Exception as e:  # noqa: BLE001 - everything goes to the log
         log('FAILED ' + str(e).replace('\n', ' | ')[:3000])
         sys.exit(1)
